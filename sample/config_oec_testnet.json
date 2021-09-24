@@ -1,0 +1,4 @@
+{
+  "ws_url": "wss://exchaintestws.okex.org:8443",
+  "rpc_url": "https://exchaintestrpc.okex.org"
+}

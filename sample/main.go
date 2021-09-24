@@ -1,28 +1,16 @@
 package main
 
 import (
-	"context"
+	"ethcli"
 	"fmt"
-
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
-)
-
-const (
-	rpcUrlTestnet = "https://exchaintestrpc.okex.org"
+	"log"
 )
 
 func main() {
-	rpcClient, err := rpc.DialContext(context.Background(), rpcUrlTestnet)
-	if err != nil {
-		panic(err)
-	}
-
-	ethcli := ethclient.NewClient(rpcClient)
-	chainId, err := ethcli.ChainID(context.Background())
+	cli, err := ethcli.NewEthClient("./sample/config_oec_testnet.json")
 	if err!=nil{
-		panic(err)
+		log.Fatalln(err)
 	}
 
-	fmt.Println(chainId)
+	fmt.Println(cli.GetChainId())
 }
