@@ -3,6 +3,7 @@ package ethcli
 import (
 	"context"
 	"ethcli/config"
+	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -15,8 +16,9 @@ import (
 
 type WrappedClient struct {
 	*ethclient.Client
-	chainId *big.Int
-	abis    map[string]abi.ABI
+	chainId           *big.Int
+	abis              map[string]abi.ABI
+	contractAddresses map[string]string
 }
 
 func (wc *WrappedClient) GetChainId() *big.Int {
@@ -24,9 +26,11 @@ func (wc *WrappedClient) GetChainId() *big.Int {
 }
 
 // ONLY invoke at the initialization of WrappedClient
-func (wc *WrappedClient) loadAbis(abisPath string) error {
+func (wc *WrappedClient) loadContractInfos(cfg *config.Config) error {
 	wc.abis = make(map[string]abi.ABI)
-	filesInfo, err := ioutil.ReadDir(abisPath)
+	wc.contractAddresses = cfg.ContractAddresses
+
+	filesInfo, err := ioutil.ReadDir(cfg.AbisPath)
 	if err != nil {
 		return err
 	}
@@ -39,7 +43,7 @@ func (wc *WrappedClient) loadAbis(abisPath string) error {
 		}
 
 		// read abi files
-		f, err := os.Open(filepath.Join(abisPath, fileName))
+		f, err := os.Open(filepath.Join(cfg.AbisPath, fileName))
 		if err != nil {
 			return err
 		}
@@ -55,6 +59,15 @@ func (wc *WrappedClient) loadAbis(abisPath string) error {
 	return nil
 }
 
+func (wc *WrappedClient) buildInput(contractName, methodName string, args ...interface{}) ([]byte, error) {
+	a, ok := wc.abis[contractName]
+	if !ok {
+		return nil, fmt.Errorf("abi of contract %s is missed", contractName)
+	}
+
+	return a.Pack(methodName, args)
+}
+
 func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	cfg, err := config.ParseConfig(configPath)
 	if err != nil {
@@ -62,7 +75,7 @@ func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	}
 
 	wrappedCli = new(WrappedClient)
-	err = wrappedCli.loadAbis(cfg.AbisPath)
+	err = wrappedCli.loadContractInfos(cfg)
 
 	rpcClient, err := rpc.DialContext(context.Background(), cfg.RpcUrl)
 	if err != nil {

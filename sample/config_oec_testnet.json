@@ -1,5 +1,9 @@
 {
   "ws_url": "wss://exchaintestws.okex.org:8443",
   "rpc_url": "https://exchaintestrpc.okex.org",
-  "abis_path": "./sample/abis_test"
+  "abis_path": "./sample/abis_test",
+  "contract_addresses": {
+    "contract1": "0x0000000000000000000000000000000000000000",
+    "contract2": "0x0000000000000000000000000000000000000001"
+  }
 }
