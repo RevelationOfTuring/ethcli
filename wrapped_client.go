@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"ethcli/config"
 	"fmt"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/okex/exchain-ethereum-compatible/utils"
 	"io/ioutil"
@@ -94,19 +95,35 @@ func (wc *WrappedClient) getNonce() (nonce uint64, err error) {
 	return nonce, fmt.Errorf("fail to get nonce of %s", wc.address)
 }
 
-//func (wc *WrappedClient) CallContract(contractName, methodName string, args ...interface{}) error {
-//	a, ok := wc.abis[contractName]
-//	if !ok {
-//		return fmt.Errorf("abi of contract %s is missed", contractName)
-//	}
-//
-//	input, err := a.Pack(methodName, args...)
-//	if err != nil {
-//		return err
-//	}
-//
-//	return nil
-//}
+func (wc *WrappedClient) CallContract(contractName string, value *big.Int, methodName string, args ...interface{}) (
+	txHash ethcmn.Hash, err error) {
+	contractAddr, ok := wc.contractAddresses[contractName]
+	if !ok {
+		return txHash, fmt.Errorf("contract address of %s isn't provided in config file", contractName)
+	}
+
+	a, ok := wc.abis[contractName]
+	if !ok {
+		return txHash, fmt.Errorf("abi of contract %s is missed", contractName)
+	}
+
+	input, err := a.Pack(methodName, args...)
+	if err != nil {
+		return
+	}
+
+	gasEstimate, err := wc.EstimateGas(context.Background(), ethereum.CallMsg{
+		From:     wc.address,
+		To:       &contractAddr,
+		GasPrice: wc.gasPrice,
+		Data:     input,
+	})
+	if err != nil {
+		gasEstimate = uint64(500000)
+	}
+
+	return wc.SendTx(contractAddr, value, gasEstimate, input)
+}
 
 func (wc *WrappedClient) SendTx(to ethcmn.Address, value *big.Int, gasLimit uint64, input []byte) (
 	txHash ethcmn.Hash, err error) {

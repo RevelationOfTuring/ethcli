@@ -14,17 +14,20 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	//err = cli.CallContract("IERC20", "balanceOf", ethcmn.HexToAddress("0xF202E4e0EB3C10c4F0ace15aF6B6EA3AFAe777AC"))
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-	txHash, err := cli.SendTx(
+	amount, ok := new(big.Int).SetString("1000000000000000000000000000000000", 10)
+	if !ok {
+		panic("convert failed")
+	}
+
+	fmt.Println(amount)
+	txHash, err := cli.CallContract(
+		"ERC20Token",
+		big.NewInt(0),
+		"mintDirectly",
 		ethcmn.HexToAddress("0xF202E4e0EB3C10c4F0ace15aF6B6EA3AFAe777AC"),
-		big.NewInt(10000000000000000),
-		21000,
-		nil,
+		amount,
 	)
-	if err!=nil{
+	if err != nil {
 		log.Fatalln(err)
 	}
 

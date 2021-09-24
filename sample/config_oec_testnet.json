@@ -5,7 +5,7 @@
   "priv_key_path": "./sample/.priv_key",
   "gas_price": 1000000000,
   "contract_addresses": {
-    "contract1": "0x0000000000000000000000000000000000000000",
+    "ERC20Token": "0x037CCE3BCab119ec4780EA548B7a7011dC528f6F",
     "contract2": "0x0000000000000000000000000000000000000001"
   }
 }
