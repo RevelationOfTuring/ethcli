@@ -4,8 +4,9 @@ import (
 	"context"
 	"ethcli"
 	"fmt"
-	ethcmn "github.com/ethereum/go-ethereum/common"
 	"log"
+
+	ethcmn "github.com/ethereum/go-ethereum/common"
 )
 
 func main() {
@@ -37,5 +38,5 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println(receipt)
+	fmt.Println(receipt.Status)
 }

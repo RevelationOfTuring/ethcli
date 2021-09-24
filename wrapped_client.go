@@ -5,9 +5,6 @@ import (
 	"crypto/ecdsa"
 	"ethcli/config"
 	"fmt"
-	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/okex/exchain-ethereum-compatible/utils"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -15,11 +12,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/okex/exchain-ethereum-compatible/utils"
 )
 
 type WrappedClient struct {
