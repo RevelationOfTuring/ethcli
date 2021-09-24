@@ -5,6 +5,8 @@ import (
 	"crypto/ecdsa"
 	"ethcli/config"
 	"fmt"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/okex/exchain-ethereum-compatible/utils"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -103,14 +105,29 @@ func (wc *WrappedClient) getNonce() (nonce uint64, err error) {
 //		return err
 //	}
 //
-//	nonce, err := wc.getNonce()
-//	if err != nil {
-//		return err
-//	}
-//
-//
 //	return nil
 //}
+
+func (wc *WrappedClient) SendTx(to ethcmn.Address, value *big.Int, gasLimit uint64, input []byte) (
+	txHash ethcmn.Hash, err error) {
+	nonce, err := wc.getNonce()
+	if err != nil {
+		return
+	}
+
+	unsignedTx := types.NewTransaction(nonce, to, value, gasLimit, wc.gasPrice, input)
+	signedTx, err := types.SignTx(unsignedTx, types.NewLondonSigner(wc.chainId), wc.ecdsakey)
+	if err != nil {
+		return
+	}
+
+	err = wc.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		return
+	}
+
+	return utils.Hash(signedTx)
+}
 
 func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	cfg, err := config.ParseConfig(configPath)
