@@ -11,4 +11,5 @@ func TestParseConfig(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "https://exchaintestrpc.okex.org", config.RpcUrl)
 	require.Equal(t, "wss://exchaintestws.okex.org:8443", config.WsUrl)
+	require.Equal(t, "./abis_test", config.AbisPath)
 }

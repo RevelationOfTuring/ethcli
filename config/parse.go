@@ -6,8 +6,9 @@ import (
 )
 
 type Config struct {
-	RpcUrl string `json:"rpc_url"`
-	WsUrl  string `json:"ws_url"`
+	RpcUrl   string `json:"rpc_url"`
+	WsUrl    string `json:"ws_url"`
+	AbisPath string `json:"abis_path"`
 }
 
 func ParseConfig(configPath string) (config *Config, err error) {
@@ -16,9 +17,6 @@ func ParseConfig(configPath string) (config *Config, err error) {
 		return
 	}
 
-	if err = json.Unmarshal(bytes, &config); err != nil {
-		return
-	}
-
+	err = json.Unmarshal(bytes, &config)
 	return
 }

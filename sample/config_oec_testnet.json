@@ -1,4 +1,5 @@
 {
   "ws_url": "wss://exchaintestws.okex.org:8443",
-  "rpc_url": "https://exchaintestrpc.okex.org"
+  "rpc_url": "https://exchaintestrpc.okex.org",
+  "abis_path": "./sample/abis_test"
 }
