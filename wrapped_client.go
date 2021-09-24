@@ -2,23 +2,28 @@ package ethcli
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"ethcli/config"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/ethereum/go-ethereum/crypto"
 	"io/ioutil"
 	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 type WrappedClient struct {
 	*ethclient.Client
 	chainId           *big.Int
 	abis              map[string]abi.ABI
-	contractAddresses map[string]string
+	contractAddresses map[string]ethcmn.Address
+	ecdsakey          *ecdsa.PrivateKey
 }
 
 func (wc *WrappedClient) GetChainId() *big.Int {
@@ -28,7 +33,10 @@ func (wc *WrappedClient) GetChainId() *big.Int {
 // ONLY invoke at the initialization of WrappedClient
 func (wc *WrappedClient) loadContractInfos(cfg *config.Config) error {
 	wc.abis = make(map[string]abi.ABI)
-	wc.contractAddresses = cfg.ContractAddresses
+	wc.contractAddresses = make(map[string]ethcmn.Address)
+	for contractName, contracrAddr := range cfg.ContractAddresses {
+		wc.contractAddresses[contractName] = ethcmn.HexToAddress(contracrAddr)
+	}
 
 	filesInfo, err := ioutil.ReadDir(cfg.AbisPath)
 	if err != nil {
@@ -76,6 +84,14 @@ func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 
 	wrappedCli = new(WrappedClient)
 	err = wrappedCli.loadContractInfos(cfg)
+	if err != nil {
+		return
+	}
+
+	wrappedCli.ecdsakey, err = crypto.LoadECDSA(cfg.PrivKeyPath)
+	if err != nil {
+		return
+	}
 
 	rpcClient, err := rpc.DialContext(context.Background(), cfg.RpcUrl)
 	if err != nil {

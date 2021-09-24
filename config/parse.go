@@ -9,6 +9,7 @@ type Config struct {
 	RpcUrl            string            `json:"rpc_url"`
 	WsUrl             string            `json:"ws_url"`
 	AbisPath          string            `json:"abis_path"`
+	PrivKeyPath       string            `json:"priv_key_path"`
 	ContractAddresses map[string]string `json:"contract_addresses"`
 }
 
