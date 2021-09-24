@@ -8,7 +8,7 @@ import (
 
 func main() {
 	cli, err := ethcli.NewEthClient("./sample/config_oec_testnet.json")
-	if err!=nil{
+	if err != nil {
 		log.Fatalln(err)
 	}
 

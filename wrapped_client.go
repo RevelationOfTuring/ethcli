@@ -5,8 +5,8 @@ import (
 	"crypto/ecdsa"
 	"ethcli/config"
 	"fmt"
-	"github.com/ethereum/go-ethereum/crypto"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethcmn "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -24,6 +25,7 @@ type WrappedClient struct {
 	abis              map[string]abi.ABI
 	contractAddresses map[string]ethcmn.Address
 	ecdsakey          *ecdsa.PrivateKey
+	address           ethcmn.Address
 }
 
 func (wc *WrappedClient) GetChainId() *big.Int {
@@ -92,6 +94,8 @@ func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	if err != nil {
 		return
 	}
+	wrappedCli.address = crypto.PubkeyToAddress(*wrappedCli.ecdsakey.Public().(*ecdsa.PublicKey))
+	log.Printf("account %s is online\n", wrappedCli.address)
 
 	rpcClient, err := rpc.DialContext(context.Background(), cfg.RpcUrl)
 	if err != nil {
