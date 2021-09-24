@@ -10,6 +10,7 @@ type Config struct {
 	WsUrl             string            `json:"ws_url"`
 	AbisPath          string            `json:"abis_path"`
 	PrivKeyPath       string            `json:"priv_key_path"`
+	GasPrice          int64            `json:"gas_price"`
 	ContractAddresses map[string]string `json:"contract_addresses"`
 }
 

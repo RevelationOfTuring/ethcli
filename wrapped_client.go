@@ -26,6 +26,7 @@ type WrappedClient struct {
 	contractAddresses map[string]ethcmn.Address
 	ecdsakey          *ecdsa.PrivateKey
 	address           ethcmn.Address
+	gasPrice          *big.Int
 }
 
 func (wc *WrappedClient) GetChainId() *big.Int {
@@ -78,6 +79,39 @@ func (wc *WrappedClient) buildInput(contractName, methodName string, args ...int
 	return a.Pack(methodName, args)
 }
 
+func (wc *WrappedClient) getNonce() (nonce uint64, err error) {
+	for i := 0; i < 5; i++ {
+		// query again with 5 times in case of timeout
+		nonce, err = wc.PendingNonceAt(context.Background(), wc.address)
+		if err != nil {
+			continue
+		}
+		return // successfully
+	}
+
+	return nonce, fmt.Errorf("fail to get nonce of %s", wc.address)
+}
+
+//func (wc *WrappedClient) CallContract(contractName, methodName string, args ...interface{}) error {
+//	a, ok := wc.abis[contractName]
+//	if !ok {
+//		return fmt.Errorf("abi of contract %s is missed", contractName)
+//	}
+//
+//	input, err := a.Pack(methodName, args...)
+//	if err != nil {
+//		return err
+//	}
+//
+//	nonce, err := wc.getNonce()
+//	if err != nil {
+//		return err
+//	}
+//
+//
+//	return nil
+//}
+
 func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	cfg, err := config.ParseConfig(configPath)
 	if err != nil {
@@ -96,6 +130,9 @@ func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	}
 	wrappedCli.address = crypto.PubkeyToAddress(*wrappedCli.ecdsakey.Public().(*ecdsa.PublicKey))
 	log.Printf("account %s is online\n", wrappedCli.address)
+
+	wrappedCli.gasPrice = big.NewInt(cfg.GasPrice)
+	log.Printf("gas price is %s\n", wrappedCli.gasPrice)
 
 	rpcClient, err := rpc.DialContext(context.Background(), cfg.RpcUrl)
 	if err != nil {

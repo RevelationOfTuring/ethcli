@@ -3,6 +3,7 @@
   "rpc_url": "https://exchaintestrpc.okex.org",
   "abis_path": "./sample/abis_test",
   "priv_key_path": "./sample/.priv_key",
+  "gas_price": 1000000000,
   "contract_addresses": {
     "contract1": "0x0000000000000000000000000000000000000000",
     "contract2": "0x0000000000000000000000000000000000000001"
