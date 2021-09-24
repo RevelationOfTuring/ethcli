@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"ethcli"
 	"fmt"
 	"log"
 
+	"github.com/RevelationOfTuring/ethcli"
 	ethcmn "github.com/ethereum/go-ethereum/common"
 )
 

@@ -3,7 +3,6 @@ package ethcli
 import (
 	"context"
 	"crypto/ecdsa"
-	"ethcli/config"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/RevelationOfTuring/ethcli/config"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethcmn "github.com/ethereum/go-ethereum/common"
