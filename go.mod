@@ -1,4 +1,4 @@
-module ethcli
+module github.com/RevelationOfTuring/ethcli
 
 go 1.15
 
