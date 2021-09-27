@@ -2,12 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/RevelationOfTuring/ethcli"
-	ethcmn "github.com/ethereum/go-ethereum/common"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"time"
+
+	"github.com/RevelationOfTuring/ethcli"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 )
 
 type Config struct {
