@@ -41,6 +41,10 @@ func (wc *WrappedClient) GetChainId() *big.Int {
 
 // ONLY invoke at the initialization of WrappedClient
 func (wc *WrappedClient) loadContractInfos(cfg *config.Config) error {
+	if len(cfg.ContractAddresses) == 0 {
+		return nil
+	}
+
 	wc.abis = make(map[string]abi.ABI)
 	wc.contractAddresses = make(map[string]ethcmn.Address)
 	for contractName, contracrAddr := range cfg.ContractAddresses {
@@ -83,6 +87,10 @@ func (wc *WrappedClient) buildInput(contractName, methodName string, args ...int
 	}
 
 	return a.Pack(methodName, args)
+}
+
+func (wc *WrappedClient) GetEcdsaKeysNum() int {
+	return len(wc.ecdsaKeys)
 }
 
 func (wc *WrappedClient) checkKeyIndex(keyIndex int) error {
@@ -183,7 +191,7 @@ func (wc *WrappedClient) LoadPrivKeysFromFile(filePath string) error {
 			return err
 		}
 
-		address := crypto.PubkeyToAddress(*(privKey.Public()).(*ecdsa.PublicKey))
+		address := crypto.PubkeyToAddress(*privKey.Public().(*ecdsa.PublicKey))
 		wc.ecdsaKeys = append(wc.ecdsaKeys, privKey)
 		wc.addresses = append(wc.addresses, address)
 		fmt.Printf("		    %d: %s\n", count, address)

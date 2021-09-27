@@ -1,0 +1,10 @@
+{
+  "ws_url": "wss://exchaintestws.okex.org:8443",
+  "rpc_url": "https://exchaintestrpc.okex.org",
+  "priv_key_path": "./sample/.priv_keys",
+  "gas_price": 1000000000,
+  "contract_addresses": {
+    "ERC20Token": "0x037CCE3BCab119ec4780EA548B7a7011dC528f6F",
+    "contract2": "0x0000000000000000000000000000000000000001"
+  }
+}

@@ -17,4 +17,13 @@ func TestParseConfig(t *testing.T) {
 	require.Equal(t, 2, len(config.ContractAddresses))
 	require.Equal(t, "0x0000000000000000000000000000000000000000", config.ContractAddresses["contract1"])
 	require.Equal(t, "0x0000000000000000000000000000000000000001", config.ContractAddresses["contract2"])
+
+	config, err = ParseConfig("./config_test_ignore.json")
+	require.NoError(t, err)
+	require.Equal(t, "https://exchaintestrpc.okex.org", config.RpcUrl)
+	require.Equal(t, "", config.WsUrl)
+	require.Equal(t, "", config.AbisPath)
+	require.Equal(t, "./.priv_key", config.PrivKeyPath)
+	require.Equal(t, int64(1000000000), config.GasPrice)
+	require.Equal(t, 0, len(config.ContractAddresses))
 }
