@@ -13,6 +13,7 @@ func TestParseConfig(t *testing.T) {
 	require.Equal(t, "wss://exchaintestws.okex.org:8443", config.WsUrl)
 	require.Equal(t, "./abis_test", config.AbisPath)
 	require.Equal(t, "./.priv_key", config.PrivKeyPath)
+	require.True(t, config.IsOECKind)
 	require.Equal(t, int64(1000000000), config.GasPrice)
 	require.Equal(t, 2, len(config.ContractAddresses))
 	require.Equal(t, "0x0000000000000000000000000000000000000000", config.ContractAddresses["contract1"])
@@ -24,6 +25,7 @@ func TestParseConfig(t *testing.T) {
 	require.Equal(t, "", config.WsUrl)
 	require.Equal(t, "", config.AbisPath)
 	require.Equal(t, "./.priv_key", config.PrivKeyPath)
+	require.False(t, config.IsOECKind)
 	require.Equal(t, int64(1000000000), config.GasPrice)
 	require.Equal(t, 0, len(config.ContractAddresses))
 }

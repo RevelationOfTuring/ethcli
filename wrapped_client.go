@@ -33,6 +33,8 @@ type WrappedClient struct {
 	ecdsaKeys         []*ecdsa.PrivateKey
 	addresses         []ethcmn.Address
 	gasPrice          *big.Int
+	// eth kind or oec kind
+	isOECKind bool
 }
 
 func (wc *WrappedClient) GetChainId() *big.Int {
@@ -91,6 +93,14 @@ func (wc *WrappedClient) buildInput(contractName, methodName string, args ...int
 
 func (wc *WrappedClient) GetEcdsaKeysNum() int {
 	return len(wc.ecdsaKeys)
+}
+
+func (wc *WrappedClient) GetAddress(keyIndex int) (addr ethcmn.Address, err error) {
+	if err = wc.checkKeyIndex(keyIndex); err != nil {
+		return
+	}
+
+	return wc.addresses[keyIndex], err
 }
 
 func (wc *WrappedClient) checkKeyIndex(keyIndex int) error {
@@ -166,7 +176,11 @@ func (wc *WrappedClient) SendTx(keyIndex int, to ethcmn.Address, value *big.Int,
 		return
 	}
 
-	return utils.Hash(signedTx)
+	if wc.isOECKind {
+		return utils.Hash(signedTx)
+	}
+
+	return signedTx.Hash(), err
 }
 
 func (wc *WrappedClient) LoadPrivKeysFromFile(filePath string) error {
@@ -228,5 +242,10 @@ func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	wrappedCli.Client = ethclient.NewClient(rpcClient)
 
 	wrappedCli.chainId, err = wrappedCli.Client.ChainID(context.Background())
+	if err != nil {
+		return
+	}
+
+	wrappedCli.isOECKind = cfg.IsOECKind
 	return
 }
