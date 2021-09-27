@@ -1,9 +1,12 @@
 package ethcli
 
 import (
+	"bufio"
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -27,9 +30,11 @@ type WrappedClient struct {
 	chainId           *big.Int
 	abis              map[string]abi.ABI
 	contractAddresses map[string]ethcmn.Address
-	ecdsakey          *ecdsa.PrivateKey
-	address           ethcmn.Address
+	ecdsaKeys         []*ecdsa.PrivateKey
+	addresses         []ethcmn.Address
 	gasPrice          *big.Int
+	// eth kind or oec kind
+	isOECKind bool
 }
 
 func (wc *WrappedClient) GetChainId() *big.Int {
@@ -38,6 +43,10 @@ func (wc *WrappedClient) GetChainId() *big.Int {
 
 // ONLY invoke at the initialization of WrappedClient
 func (wc *WrappedClient) loadContractInfos(cfg *config.Config) error {
+	if len(cfg.ContractAddresses) == 0 {
+		return nil
+	}
+
 	wc.abis = make(map[string]abi.ABI)
 	wc.contractAddresses = make(map[string]ethcmn.Address)
 	for contractName, contracrAddr := range cfg.ContractAddresses {
@@ -82,20 +91,44 @@ func (wc *WrappedClient) buildInput(contractName, methodName string, args ...int
 	return a.Pack(methodName, args)
 }
 
-func (wc *WrappedClient) getNonce() (nonce uint64, err error) {
+func (wc *WrappedClient) GetEcdsaKeysNum() int {
+	return len(wc.ecdsaKeys)
+}
+
+func (wc *WrappedClient) GetAddress(keyIndex int) (addr ethcmn.Address, err error) {
+	if err = wc.checkKeyIndex(keyIndex); err != nil {
+		return
+	}
+
+	return wc.addresses[keyIndex], err
+}
+
+func (wc *WrappedClient) checkKeyIndex(keyIndex int) error {
+	if keyIndex < len(wc.ecdsaKeys) {
+		return nil
+	}
+
+	return errors.New("key index is out of range to the length of WrappedClient.ecdsaKeys")
+}
+
+func (wc *WrappedClient) getNonce(keyIndex int) (nonce uint64, err error) {
+	if err = wc.checkKeyIndex(keyIndex); err != nil {
+		return
+	}
+
 	for i := 0; i < 5; i++ {
 		// query again with 5 times in case of timeout
-		nonce, err = wc.PendingNonceAt(context.Background(), wc.address)
+		nonce, err = wc.PendingNonceAt(context.Background(), wc.addresses[keyIndex])
 		if err != nil {
 			continue
 		}
 		return // successfully
 	}
 
-	return nonce, fmt.Errorf("fail to get nonce of %s", wc.address)
+	return nonce, fmt.Errorf("fail to get nonce of %s", wc.addresses[keyIndex])
 }
 
-func (wc *WrappedClient) CallContract(contractName string, value *big.Int, methodName string, args ...interface{}) (
+func (wc *WrappedClient) CallContract(keyIndex int, contractName string, value *big.Int, methodName string, args ...interface{}) (
 	txHash ethcmn.Hash, err error) {
 	contractAddr, ok := wc.contractAddresses[contractName]
 	if !ok {
@@ -113,7 +146,7 @@ func (wc *WrappedClient) CallContract(contractName string, value *big.Int, metho
 	}
 
 	gasEstimate, err := wc.EstimateGas(context.Background(), ethereum.CallMsg{
-		From:     wc.address,
+		From:     wc.addresses[keyIndex],
 		To:       &contractAddr,
 		GasPrice: wc.gasPrice,
 		Data:     input,
@@ -122,18 +155,18 @@ func (wc *WrappedClient) CallContract(contractName string, value *big.Int, metho
 		gasEstimate = uint64(500000)
 	}
 
-	return wc.SendTx(contractAddr, value, gasEstimate, input)
+	return wc.SendTx(keyIndex, contractAddr, value, gasEstimate, input)
 }
 
-func (wc *WrappedClient) SendTx(to ethcmn.Address, value *big.Int, gasLimit uint64, input []byte) (
+func (wc *WrappedClient) SendTx(keyIndex int, to ethcmn.Address, value *big.Int, gasLimit uint64, input []byte) (
 	txHash ethcmn.Hash, err error) {
-	nonce, err := wc.getNonce()
+	nonce, err := wc.getNonce(keyIndex)
 	if err != nil {
 		return
 	}
 
 	unsignedTx := types.NewTransaction(nonce, to, value, gasLimit, wc.gasPrice, input)
-	signedTx, err := types.SignTx(unsignedTx, types.NewLondonSigner(wc.chainId), wc.ecdsakey)
+	signedTx, err := types.SignTx(unsignedTx, types.NewLondonSigner(wc.chainId), wc.ecdsaKeys[keyIndex])
 	if err != nil {
 		return
 	}
@@ -143,7 +176,43 @@ func (wc *WrappedClient) SendTx(to ethcmn.Address, value *big.Int, gasLimit uint
 		return
 	}
 
-	return utils.Hash(signedTx)
+	if wc.isOECKind {
+		return utils.Hash(signedTx)
+	}
+
+	return signedTx.Hash(), err
+}
+
+func (wc *WrappedClient) LoadPrivKeysFromFile(filePath string) error {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	buffer := bufio.NewReader(f)
+	log.Println("loading private keys ...")
+
+	count := 1
+	for {
+		bytes, _, err := buffer.ReadLine()
+		if err == io.EOF {
+			break
+		}
+
+		privKey, err := crypto.HexToECDSA(string(bytes))
+		if err != nil {
+			return err
+		}
+
+		address := crypto.PubkeyToAddress(*privKey.Public().(*ecdsa.PublicKey))
+		wc.ecdsaKeys = append(wc.ecdsaKeys, privKey)
+		wc.addresses = append(wc.addresses, address)
+		fmt.Printf("		    %d: %s\n", count, address)
+		count++
+	}
+
+	return nil
 }
 
 func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
@@ -158,12 +227,10 @@ func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 		return
 	}
 
-	wrappedCli.ecdsakey, err = crypto.LoadECDSA(cfg.PrivKeyPath)
+	err = wrappedCli.LoadPrivKeysFromFile(cfg.PrivKeyPath)
 	if err != nil {
 		return
 	}
-	wrappedCli.address = crypto.PubkeyToAddress(*wrappedCli.ecdsakey.Public().(*ecdsa.PublicKey))
-	log.Printf("account %s is online\n", wrappedCli.address)
 
 	wrappedCli.gasPrice = big.NewInt(cfg.GasPrice)
 	log.Printf("gas price is %s\n", wrappedCli.gasPrice)
@@ -175,5 +242,10 @@ func NewEthClient(configPath string) (wrappedCli *WrappedClient, err error) {
 	wrappedCli.Client = ethclient.NewClient(rpcClient)
 
 	wrappedCli.chainId, err = wrappedCli.Client.ChainID(context.Background())
+	if err != nil {
+		return
+	}
+
+	wrappedCli.isOECKind = cfg.IsOECKind
 	return
 }

@@ -4,6 +4,7 @@
   "abis_path": "./abis_test",
   "priv_key_path": "./.priv_key",
   "gas_price": 1000000000,
+  "is_oec_kind": true,
   "contract_addresses": {
     "contract1": "0x0000000000000000000000000000000000000000",
     "contract2": "0x0000000000000000000000000000000000000001"

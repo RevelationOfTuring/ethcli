@@ -1,0 +1,5 @@
+{
+  "rpc_url": "https://exchaintestrpc.okex.org",
+  "priv_key_path": "./.priv_key",
+  "gas_price": 1000000000
+}

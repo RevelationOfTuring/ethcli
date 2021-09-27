@@ -1,0 +1,6 @@
+{
+  "rpc_url": "http://127.0.0.1:8545",
+  "priv_key_path": "./priv_keys",
+  "gas_price": 1000000000,
+  "is_oec_kind": false
+}
