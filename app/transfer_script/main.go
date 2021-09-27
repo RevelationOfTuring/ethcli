@@ -49,6 +49,7 @@ func main() {
 		txHash, err := cli.SendTx(i, toAddr, transferAmount, 21000, nil)
 		if err != nil {
 			log.Printf("key index [%d] Address [%s]: send Tx error: %s \n", i, fromAddr, err)
+			continue
 		}
 
 		log.Printf("[%d] Address [%s] transfers successfully, tx hash [%s]\n", i+1, fromAddr, txHash)
